@@ -375,6 +375,20 @@ jobs:
         commit: ${{ inputs.nomount_commit }}
         kernel_version: ${{ inputs.kernel_version }}
 
+    - name: Integrate ZeroMount
+      if: contains(inputs.feature_set, 'ZeroMount') || inputs.feature_set == 'All'
+      uses: ./.github/actions/zeromount
+      with:
+        commit: ${{ inputs.zeromount_commit || 'main' }}
+        kernel_version: ${{ inputs.kernel_version }}
+
+    - name: Configure ZRAM (LZ4 Compression)
+      if: contains(inputs.feature_set, 'ZRAM') || inputs.feature_set == 'All'
+      uses: ./.github/actions/zram
+      with:
+        kernel_version: ${{ inputs.kernel_version }}
+        algorithm: 'lz4'
+
     - name: Apply ABI Compare Bypass
       if: false
       working-directory: ${{ github.workspace }}/kernel
@@ -579,6 +593,18 @@ jobs:
         if [ "${{ contains(inputs.feature_set, 'NoMount') || inputs.feature_set == 'All' }}" = "true" ]; then
           NOMOUNT_ENABLED="true"
         fi
+
+        # ZeroMount is optional
+        ZEROMOUNT_ENABLED="false"
+        if [ "${{ contains(inputs.feature_set, 'ZeroMount') || inputs.feature_set == 'All' }}" = "true" ]; then
+          ZEROMOUNT_ENABLED="true"
+        fi
+
+        # ZRAM (LZ4) is optional
+        ZRAM_ENABLED="false"
+        if [ "${{ contains(inputs.feature_set, 'ZRAM') || inputs.feature_set == 'All' }}" = "true" ]; then
+          ZRAM_ENABLED="true"
+        fi
         
         # Determine build status
         if [ "${{ job.status }}" = "success" ]; then
@@ -607,6 +633,13 @@ jobs:
         else
           NOMOUNT_SHA="N/A"
         fi
+
+        if [ "$ZEROMOUNT_ENABLED" = "true" ]; then
+          ZEROMOUNT_SHA="${{ inputs.zeromount_commit || 'main' }}"
+        else
+          ZEROMOUNT_SHA="N/A"
+        fi
+
         SUSFS_SHA="${SUSFS_COMMIT:-${{ inputs.susfs_commit }}}"
         
         # Get SUSFS version from susfs.h if available
@@ -643,6 +676,8 @@ jobs:
           echo "| **SUSFS Version** | ${SUSFS_VER} |"
           echo "| **SUSFS Commit** | ${SUSFS_SHA} |"
           echo "| **NoMount Commit** | ${NOMOUNT_SHA} |"
+          echo "| **ZeroMount Commit** | ${ZEROMOUNT_SHA} |"
+          echo "| **ZRAM (LZ4)** | ${ZRAM_ENABLED} |"
           echo "| **Feature Set** | ${{ inputs.feature_set }} |"
           echo "| **Variant** | ${{ inputs.variant }} |"
           echo
@@ -678,6 +713,24 @@ jobs:
         NOMOUNT_ENABLED="false"
         if [ "${{ contains(inputs.feature_set, 'NoMount') || inputs.feature_set == 'All' }}" = "true" ]; then
           NOMOUNT_ENABLED="true"
+        fi
+
+        # ZeroMount is optional: only resolve its artifact when requested.
+        ZEROMOUNT_ENABLED="false"
+        if [ "${{ contains(inputs.feature_set, 'ZeroMount') || inputs.feature_set == 'All' }}" = "true" ]; then
+          ZEROMOUNT_ENABLED="true"
+        fi
+
+        # ZRAM (LZ4) is optional: only resolve its artifact when requested.
+        ZRAM_ENABLED="false"
+        if [ "${{ contains(inputs.feature_set, 'ZRAM') || inputs.feature_set == 'All' }}" = "true" ]; then
+          ZRAM_ENABLED="true"
+        fi
+
+        if [ "$ZEROMOUNT_ENABLED" = "true" ]; then
+          ZEROMOUNT_COMMIT_VAL="${{ inputs.zeromount_commit || 'main' }}"
+        else
+          ZEROMOUNT_COMMIT_VAL="N/A"
         fi
 
         if [ "$NOMOUNT_ENABLED" = "true" ]; then
@@ -748,6 +801,8 @@ jobs:
           --arg root_commit "${ROOT_COMMIT:-${KSU_COMMIT:-N/A}}" \
           --arg susfs_commit "${SUSFS_COMMIT:-N/A}" \
           --arg nomount_commit "${NOMOUNT_COMMIT:-N/A}" \
+          --arg zeromount_commit "$ZEROMOUNT_COMMIT_VAL" \
+          --arg zram_lz4 "$ZRAM_ENABLED" \
           --arg android_branch "${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}" \
           --arg kmi "${{ inputs.android_version }}-${{ inputs.kernel_version }}" \
           --arg kernel_source_commit "${KERNEL_SOURCE_COMMIT:-N/A}" \
@@ -772,6 +827,8 @@ jobs:
             },
             susfs_revision: $susfs_commit,
             nomount_commit: $nomount_commit,
+            zeromount_commit: $zeromount_commit,
+            zram_lz4: $zram_lz4,
             android_branch: $android_branch,
             kmi: $kmi,
             kernel_source_commit: $kernel_source_commit,
