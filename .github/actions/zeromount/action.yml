@@ -3,8 +3,16 @@ description: 'Applies ZeroMount patch to the kernel source'
 inputs:
   kernel_dir:
     description: 'Path to kernel source directory'
-    required: true
-    default: 'common'
+    required: false
+    default: '.'
+  commit:
+    description: 'Commit or branch'
+    required: false
+    default: 'main'
+  kernel_version:
+    description: 'Kernel version'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -12,7 +20,22 @@ runs:
     - name: Apply ZeroMount Patch
       shell: bash
       run: |
+      
         echo "Applying ZeroMount..."
-        cd ${{ inputs.kernel_dir }}
-        git apply ../patches/zeromount-android12-5.10.patch
+        
+        # Если kernel_dir задан и отличается от точки, заходим в него
+        if [ "${{ inputs.kernel_dir }}" != "." ] && [ -n "${{ inputs.kernel_dir }}" ]; then
+          cd ${{ inputs.kernel_dir }}
+          PATCH_PATH="../patches/zeromount-android12-5.10.patch"
+        else
+          PATCH_PATH="patches/zeromount-android12-5.10.patch"
+        fi
+        
+        if [ -f "$PATCH_PATH" ]; then
+          git apply "$PATCH_PATH"
+        else
+          # Альтернативный путь поиска патча, если структура отличается
+          git apply ../patches/zeromount-android12-5.10.patch || git apply patches/zeromount-android12-5.10.patch
+        fi
+        
         echo "ZeroMount applied successfully!"
