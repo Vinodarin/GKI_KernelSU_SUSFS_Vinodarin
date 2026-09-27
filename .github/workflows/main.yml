@@ -522,7 +522,7 @@ jobs:
           FEATURES=""
           [ "${{ inputs.use_susfs }}" = "true" ] && FEATURES="${FEATURES}SUSFS+"
           [ "${{ inputs.use_nomount }}" = "true" ] && FEATURES="${FEATURES}NoMount+"
-          [ "${{ inputs.use_zeromount }}" = "true" ] $$ FEATURES="$FEATURES ZeroMount+"
+          [ "${{ inputs.use_zeromount }}" = "true" ] && FEATURES="$FEATURES ZeroMount+"
           [ "${{ inputs.use_zram }}" = "true" ] && FEATURES="${FEATURES}ZRAM+"
           [ "${{ inputs.use_bbg }}" = "true" ] && FEATURES="${FEATURES}BBG+"
           [ "${{ inputs.use_net }}" = "true" ] && FEATURES="${FEATURES}NET+"
