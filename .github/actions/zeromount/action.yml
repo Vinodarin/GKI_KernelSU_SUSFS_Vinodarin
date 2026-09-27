@@ -14,13 +14,5 @@ runs:
       run: |
         echo "Applying ZeroMount..."
         cd ${{ inputs.kernel_dir }}
-        
-        # Здесь укажите команду или скрипт применения патча ZeroMount
-        # Например, если у вас есть файл патча в репозитории:
-        # git apply ../path/to/zeromount.patch
-        
-        # Либо скачивание и применение скрипта/патча напрямую:
-        # curl -sSL <ссылка_на_патч> | git apply -
-        
+        git apply ../patches/zeromount-android12-5.10.patch
         echo "ZeroMount applied successfully!"
-        
