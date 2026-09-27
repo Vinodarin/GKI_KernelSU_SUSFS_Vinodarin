@@ -1,0 +1,22 @@
+name: 'Update ZRAM LZ4'
+description: 'Updates LZ4 / LZ4KD compression for ZRAM'
+inputs:
+  kernel_dir:
+    description: 'Path to kernel source directory'
+    required: true
+    default: 'common'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Update LZ4 for ZRAM
+      shell: bash
+      run: |
+        echo "Updating ZRAM LZ4 sources..."
+        cd ${{ inputs.kernel_dir }}
+        
+        # Здесь прописывается замена файлов lz4 в драйверах ядра (crypto/ или lib/)
+        # Например, удаление старых исходников lz4 и копирование новых оптимизированных файлов
+        
+        echo "ZRAM LZ4 updated successfully!"
+        

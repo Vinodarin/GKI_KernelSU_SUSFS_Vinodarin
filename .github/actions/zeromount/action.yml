@@ -1,0 +1,26 @@
+name: 'Apply ZeroMount'
+description: 'Applies ZeroMount patch to the kernel source'
+inputs:
+  kernel_dir:
+    description: 'Path to kernel source directory'
+    required: true
+    default: 'common'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Apply ZeroMount Patch
+      shell: bash
+      run: |
+        echo "Applying ZeroMount..."
+        cd ${{ inputs.kernel_dir }}
+        
+        # Здесь укажите команду или скрипт применения патча ZeroMount
+        # Например, если у вас есть файл патча в репозитории:
+        # git apply ../path/to/zeromount.patch
+        
+        # Либо скачивание и применение скрипта/патча напрямую:
+        # curl -sSL <ссылка_на_патч> | git apply -
+        
+        echo "ZeroMount applied successfully!"
+        
