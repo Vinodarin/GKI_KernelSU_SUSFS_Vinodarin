@@ -1,41 +1,58 @@
 name: 'Apply ZeroMount'
 description: 'Applies ZeroMount patch to the kernel source'
+
 inputs:
-  kernel_dir:
-    description: 'Path to kernel source directory'
-    required: false
-    default: '.'
   commit:
     description: 'Commit or branch'
     required: false
     default: 'main'
   kernel_version:
-    description: 'Kernel version'
+    description: 'Kernel major/minor version (for example, 5.10 or 6.6)'
     required: false
     default: ''
 
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Apply ZeroMount Patch
       shell: bash
       run: |
-      
-        echo "Applying ZeroMount..."
-        
-        # Если kernel_dir задан и отличается от точки, заходим в него
-        if [ "${{ inputs.kernel_dir }}" != "." ] && [ -n "${{ inputs.kernel_dir }}" ]; then
-          cd ${{ inputs.kernel_dir }}
-          PATCH_PATH="../patches/zeromount-android12-5.10.patch"
-        else
-          PATCH_PATH="patches/zeromount-android12-5.10.patch"
+        set -euo pipefail
+
+        # Проверяем наличие директории ядра, как в NoMount
+        KERNEL_DIR="${{ github.workspace }}/kernel/common"
+        test -d "$KERNEL_DIR" || {
+          echo "Kernel source directory does not exist: $KERNEL_DIR" >&2
+          exit 1
+        }
+
+        # Определяем версию ядра из входного параметра или переменных окружения
+        K_VER="${{ inputs.kernel_version }}"
+        if [ -z "$K_VER" ]; then
+          K_VER="${KERNEL_VERSION:-5.10}"
         fi
+
+        echo "Applying ZeroMount patch for kernel version $K_VER..."
+
+        # Ищем патч (путь зависит от того, где лежит папка patches относительно корня репозитория)
+        PATCH_FILE="${{ github.workspace }}/patches/zeromount-android12-${K_VER}.patch"
         
-        if [ -f "$PATCH_PATH" ]; then
-          git apply "$PATCH_PATH"
-        else
-          # Альтернативный путь поиска патча, если структура отличается
-          git apply ../patches/zeromount-android12-5.10.patch || git apply patches/zeromount-android12-5.10.patch
+        if [ ! -f "$PATCH_FILE" ]; then
+          # Пробуем альтернативный путь
+          PATCH_FILE="${{ github.workspace }}/patches/zeromount-${K_VER}.patch"
         fi
-        
+
+        test -f "$PATCH_FILE" || {
+          echo "ZeroMount patch file not found for version $K_VER" >&2
+          exit 1
+        }
+
+        # Применяем патч из директории исходников ядра
+        git -C "$KERNEL_DIR" apply "$PATCH_FILE"
         echo "ZeroMount applied successfully!"
+
+    - name: Enable ZeroMount in kernel defconfig
+      uses: ./.github/actions/set-kernel-config
+      with:
+        config_list: |
+          CONFIG_ZEROMOUNT=y
