@@ -12,11 +12,7 @@ runs:
     - name: Update LZ4 for ZRAM
       shell: bash
       run: |
-        echo "Updating ZRAM LZ4 sources..."
+        echo "Applying LZ4 1.10.0 patch for ZRAM..."
         cd ${{ inputs.kernel_dir }}
-        
-        # Здесь прописывается замена файлов lz4 в драйверах ядра (crypto/ или lib/)
-        # Например, удаление старых исходников lz4 и копирование новых оптимизированных файлов
-        
+        git apply ../patches/lz4_1.10.0.patch
         echo "ZRAM LZ4 updated successfully!"
-        
