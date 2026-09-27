@@ -47,8 +47,12 @@ runs:
           exit 1
         }
 
-        # Применяем патч из директории исходников ядра
-        git -C "$KERNEL_DIR" apply "$PATCH_FILE"
+        # Применяем патч с исправлением пробелов и попыткой слияния
+        git -C "$KERNEL_DIR" apply --whitespace=fix "$PATCH_FILE" || \
+        git -C "$KERNEL_DIR" apply --3way "$PATCH_FILE" || {
+          echo "Failed to apply ZeroMount patch automatically." >&2
+          exit 1
+        }
         echo "ZeroMount applied successfully!"
 
     - name: Enable ZeroMount in kernel defconfig
